@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  spring-boot-app:
+    image: Chanyong-Park/webflux:0.1.0
+    container_name: webfluxByDockerCompose
+    ports:
+      - "8070:8081"
+    environment:
+      WHICH_PROFILE: staging
