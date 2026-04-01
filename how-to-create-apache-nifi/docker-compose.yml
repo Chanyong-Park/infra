@@ -1,0 +1,26 @@
+version: '3'
+services:
+  nifi:
+    image: nifi-custom:latest  # Dockerfile에서 빌드한 이미지
+    container_name: nifi-server
+    ports:
+      - "8443:8443"  # NiFi 웹 UI 포트 (HTTPS)
+    environment:
+      - SINGLE_USER_CREDENTIALS_USERNAME=admin
+      - SINGLE_USER_CREDENTIALS_PASSWORD=nifipassword123 # 12자 이상 필수
+    volumes:
+      - ./my-scripts:/opt/nifi/nifi-current/my-scripts
+      # 아래와 같이 경로(./) 대신 이름을 사용
+      - nifi-conf:/opt/nifi/nifi-current/conf
+      - nifi-database:/opt/nifi/nifi-current/database_repository
+      - nifi-flowfile:/opt/nifi/nifi-current/flowfile_repository
+      - nifi-content:/opt/nifi/nifi-current/content_repository
+      - nifi-provenance:/opt/nifi/nifi-current/provenance_repository
+
+# 하단에 볼륨 정의 추가
+volumes:
+  nifi-conf:
+  nifi-database:
+  nifi-flowfile:
+  nifi-content:
+  nifi-provenance:
