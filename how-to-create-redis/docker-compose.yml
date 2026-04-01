@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. Redis Server
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis_server
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    command: redis-server --requirepass your_password --appendonly yes
+    restart: always
+
+  # 2. Redis Insight
+  redis-insight:
+    image: redis/redisstack-insight:latest
+    container_name: redis_insight
+    ports:
+      - "8001:8001"
+    restart: always
+
+  # 3. Redis Commander
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:your_password # 호스트:서비스명:포트:DB번호:비번
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    restart: always
