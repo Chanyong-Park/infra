@@ -1,33 +1,49 @@
-version: '3'
 services:
-  # Kudu Master: 메타데이터 관리
   kudu-master:
-    image: apache/kudu:latest
+    image: apache/kudu:1.17.0
     container_name: kudu-master
+    # 실행 명령어를 명시적으로 'master'로 지정합니다.
+    command: ["master"]
+    environment:
+      - KUDU_MASTERS=kudu-master:7051
+      - FS_WAL_DIR=/var/lib/kudu/master
+      - FS_DATA_DIRS=/var/lib/kudu/master
+      # 로그에서 확인된 전용 변수를 사용합니다.
+      - >
+        MASTER_ARGS=
+        --unlock_unsafe_flags
+        --use_hybrid_clock=false
     ports:
       - "8051:8051"
-    command: ["master"]
+      - "7051:7051"
 
-  # Kudu TServer: 실제 데이터 저장소
   kudu-tserver:
-    image: apache/kudu:latest
+    image: apache/kudu:1.17.0
     container_name: kudu-tserver
+    # 실행 명령어를 명시적으로 'tserver'로 지정합니다.
+    command: ["tserver"]
+    environment:
+      - KUDU_MASTERS=kudu-master:7051
+      - FS_WAL_DIR=/var/lib/kudu/tserver
+      - FS_DATA_DIRS=/var/lib/kudu/tserver
+      # TServer 전용 변수를 사용합니다.
+      - >
+        TSERVER_ARGS=
+        --unlock_unsafe_flags
+        --use_hybrid_clock=false
+        --tserver_master_addrs=kudu-master:7051
     depends_on:
       - kudu-master
-    ports:
-      - "8050:8050"
-    command: ["tserver", "--kudu_master_addrs=kudu-master:7051"]
 
-  # Impala: 쿼리 엔진 (Kudu와 연동)
   impala:
-    image: apache/kudu:latest # Kudu 이미지에 Impala가 내장된 통합 버전 사용
-    container_name: kudu-impala
-    depends_on:
-      - kudu-tserver
+    image: apache/impala:4.4.1-impala_quickstart_hms
+    container_name: impala-test
+    command: ["hms"]
     ports:
-      - "21000:21000" # Impala Shell
-      - "21050:21050" # JDBC (Spring Boot 연결용)
-      - "25000:25000" # Web UI
-    command: ["impala", "--kudu_master_addrs=kudu-master:7051"]
-    # 중요: 임팔라는 메모리를 많이 사용하므로 리소스 제한을 넉넉히 주거나 
-    # Docker Desktop 설정에서 충분한 메모리(4GB 이상)를 할당해야 합니다.
+      - "21000:21000"
+      - "21050:21050"
+      - "25000:25000"
+    deploy:
+      resources:
+        limits:
+          memory: 12G
